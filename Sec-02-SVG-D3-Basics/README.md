@@ -46,4 +46,39 @@ Z = close path<br>
     <line x1="225" y1="200" x2="150" y2="150" stroke="black"></line>
 </svg>
 ```
-    
+
+## Selecting Elements
+
+
+Use d3.select and d3.selectAll. 
+
+```
+const b = d3.select('div');
+const c = d3.selectAll('div);
+```
+
+Example of using class:
+
+```
+// HTML
+<div class="canvas"></div>
+
+// JS
+const canvas = d3.select(".canvas");
+```
+
+## Appending Elements
+
+```
+const canvas = d3.select('.canvas');
+
+const svg = canvas.append('svg');
+
+// append shapes to svg container
+
+svg.append('rect');
+svg.append('circle');
+svg.append('line');
+```
+
+## Method Chaining & Attributes
