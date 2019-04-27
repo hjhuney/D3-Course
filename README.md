@@ -6,4 +6,6 @@ Notes and exercises from Shaun Pelling's D3 Course. The repo for the course can 
 
 To access Shaun's files for each lecture, click on the "Branch" drop-down menu and select the lesson. 
 
-## 
+## Installing D3
+
+[D3 Github Repo](https://github.com/d3/d3)
