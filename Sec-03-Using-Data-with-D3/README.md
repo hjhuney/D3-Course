@@ -97,3 +97,12 @@ const rect = svg.selectAll('rect')
 
 ## The Enter Selection
 
+```
+const rects = d3.selectAll('rect').data(data)
+
+rects.enter().append('rect').attr()
+```
+
+## External Data (JSON)
+
+
