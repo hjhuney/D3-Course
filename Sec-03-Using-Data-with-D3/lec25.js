@@ -93,5 +93,4 @@ d3.json('menu.json').then(data => {
         .attr('text-anchor', 'end')
         .attr('fill', 'purple');
 
-
 })
