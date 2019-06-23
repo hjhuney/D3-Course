@@ -66,6 +66,27 @@
     <script src="https://www.gstatic.com/firebasejs/6.2.2/firebase-firestore.js"></script>
 
 
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyC1PxMMtxglzY79nbyslawRvXjCvvwmyPs",
+            authDomain: "udemy-d3-firebase-54724.firebaseapp.com",
+            databaseURL: "https://udemy-d3-firebase-54724.firebaseio.com",
+            projectId: "udemy-d3-firebase-54724",
+            storageBucket: "udemy-d3-firebase-54724.appspot.com",
+            messagingSenderId: "626482394339",
+            appId: "1:626482394339:web:d5ab3f0f5c5d6130"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const db = firebase.firestore();
+        const settings = {
+            timestampsInSnapshots: true
+        };
+        db.settings(settings);
+    </script>
+
 
 
     <script src="https://d3js.org/d3.v5.js"></script>
