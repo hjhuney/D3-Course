@@ -46,3 +46,8 @@ const handleMouseOut = (d, i, n) => {
     
 ```
 
+## D3 Tip (Tooltip)
+
+[D3-Tip Library](https://cdnjs.com/libraries/d3-tip)
+
+Paste the CDN above graph.js, but below the D3 library in the HTML file. 
