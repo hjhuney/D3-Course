@@ -34,7 +34,16 @@ const arcPath = d3.arc()
     .innerRadius(dims.radius / 2);
 
 // ordinal scale
-const color = d3.scaleOrdinal(d3['schemeSet3']);
+const color = d3.scaleOrdinal(d3["schemeSet3"]);
+
+// legend setup
+const legendGroup = svg.append('g')
+    .attr('transform', `translate(${dims.width + 40}, 10)`);
+
+const legend = d3.legendColor()
+    .shape('circle')
+    .shapePadding(10)
+    .scale(color);
 
 // update function
 
@@ -43,20 +52,39 @@ const update = (data) => {
     // update color scale domain
     color.domain(data.map(d => d.name));
 
+    // update and call legend
+    legendGroup.call(legend)
+    legendGroup.selectAll('text').attr('fill', 'white');
+
     // join enhanced (pie) data to path elements
     const paths = graph.selectAll('path')
         .data(pie(data));
 
+    // exit selection
+    paths.exit()
+        .transition().duration(1500)
+        .attrTween('d', arcTweenExit)
+        .remove();
+
+    // current DOM path updates
+    paths.attr('d', arcPath)
+        .transition().duration(1500)
+        .attrTween('d', arcTweenUpdate);
+
+    // enter selecction
     paths.enter()
         .append('path')
             .attr('class', 'arc')
-            .attr('d', arcPath)
+            // .attr('d', arcPath)
             .attr('stroke', '#fff')
             .attr('stroke-width', 3)
             // fill color defined by color scale above
-            .attr('fill', d => color(d.data.name));
+            .attr('fill', d => color(d.data.name))
+            .each(function(d){ this._current = d })
+            .transition().duration(1500)
+            .attrTween("d", arcTweenEnter);
 
-}
+};
 
 // data array and firestore
 var data = [];
@@ -87,4 +115,39 @@ db.collection('expenses').orderBy('cost').onSnapshot(res => {
     update(data);
 
 })
+
+// create arcs for enter selection
+const arcTweenEnter = (d) => {
+    var i = d3.interpolate(d.endAngle, d.startAngle);
+
+    return function(t){
+        d.startAngle = i(t);
+        return arcPath(d);
+    };
+}
+
+// create arcs for exit selection
+const arcTweenExit = (d) => {
+    var i = d3.interpolate(d.startAngle, d.endAngle);
+
+    return function(t){
+        d.startAngle = i(t);
+        return arcPath(d);
+    };
+}
+
+// use function keyword
+function arcTweenUpdate(d){
+
+    // interpolate between the two objects (old and updated positions)
+    var i = d3.interpolate(this._current, d);
+
+    // update current prop with new updated data
+    this._current = i(1);
+
+    return function(t){
+        return arcPath(i(t));
+    }
+
+}
     
