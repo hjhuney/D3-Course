@@ -13,17 +13,53 @@ const svg = d3.select('.canvas')
 const graph = svg.append('g')
     .attr('width', graphWidth)
     .attr('height', graphHeight)
-    .attr('transform', `translate(${margin.left}, ${margin.top})`)
+    .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+// scales
+const x = d3.scaleTime().range([0, graphWidth]);
+const y = d3.scaleLinear().range([graphHeight, 0]);
+
+// axes groups
+const xAxisGroup = graph.append('g')
+    .attr('class', 'x-axis')
+    .attr('transform', "translate(0, " + graphHeight + ")");
+
+const yAxisGroup = graph.append('g')
+    .attr('class', 'y-axis');
+
 
 // update
 const update = (data) => {
-    console.log(data);
+    
+    // set scale domains
+    x.domain(d3.extent(data, d => new Date(d.date)));
+    y.domain([0, d3.max(data, d => d.distance)]);
+
+    // create axes
+    const xAxis = d3.axisBottom(x)
+        .ticks(4)
+        // format date axis
+        .tickFormat(d3.timeFormat('%b %d'));
+
+    const yAxis = d3.axisLeft(y)
+        .ticks(4)
+        .tickFormat(d => d + 'm');
+
+    // call axes
+    xAxisGroup.call(xAxis);
+    yAxisGroup.call(yAxis);
+
+    // rotate axis text
+    xAxisGroup.selectAll('text')
+        .attr('transform', 'rotate(-40)')
+        .attr('text-anchor', 'end');
+
 }
 
 // data and firestore
 var data = [];
 
-db.collection('activities').onSnapshot(res => {
+db.collection('activities').orderBy('date').onSnapshot(res => {
 
     // retrive all document changes; 
     res.docChanges().forEach(change => {
@@ -46,5 +82,5 @@ db.collection('activities').onSnapshot(res => {
         }
     })
 
-    update(data)
+    update(data);
 })
