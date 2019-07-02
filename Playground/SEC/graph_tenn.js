@@ -226,25 +226,25 @@ d3.csv('sec_qbs_2018.csv').then(data => {
 
     // dropdown menu interface
     var selector = d3.select("#drop")
-    .append("select")
-    .attr("id","dropdown")
-    .on("change", function(d){
-        selection = document.getElementById("dropdown"); 
-        update(data);    
+        .append("select")
+        .attr("id","dropdown")
+        .on("change", function(d){
+            selection = document.getElementById("dropdown"); 
+            update(data);    
 
         
      });
 
      // create menu options
      selector.selectAll("option")
-     .data(elements)
-     .enter().append("option")
-     .attr("value", function(d){
-       return d;
-     })
-     .text(function(d){
-       return d;
-     }) 
+        .data(elements)
+        .enter().append("option")
+        .attr("value", function(d){
+        return d;
+        })
+        .text(function(d){
+        return d;
+        }) ;
 
 })
 
