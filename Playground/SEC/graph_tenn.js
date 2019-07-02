@@ -43,10 +43,6 @@ const yAxisGroup = graph.append('g');
 // grab the data
 d3.csv('sec_qbs_2018.csv').then(data => {
 
-
-
-
-
     // sort data based on date object
     data.sort((a,b) => parseFloat(b.INTModYardsPerAtt) - parseFloat(a.INTModYardsPerAtt));
 
