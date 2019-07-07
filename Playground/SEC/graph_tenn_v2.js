@@ -19,6 +19,7 @@ document.getElementById('title').style.width=titleWidth;
 
 // set dropdown container and width
 document.getElementById('drop').style.width=titleWidth;
+document.getElementById('drop_one').style.width=titleWidth;
 
 // create margins on dimensons
 const margin = {
@@ -43,9 +44,12 @@ const xAxisGroup = graph.append('g')
 const yAxisGroup = graph.append('g');
 
 
+const qbs_csv = 'sec_qbs_2018.csv'
+const team_rush_csv = 'sec_team_stats_2018.csv'
+
 
 // grab the data
-d3.csv('sec_qbs_2018.csv').then(data => {
+d3.csv(team_rush_csv).then(data => {
 
     // sort data based on date object
     data.sort((a,b) => parseFloat(b.INTModYPA) - parseFloat(a.INTModYPA));
@@ -221,19 +225,119 @@ d3.csv('sec_qbs_2018.csv').then(data => {
 
     }
 
+    // update for team data
+
+    var updateTeam = (data) => {
+
+        var elementsTeam = Object.keys(data[0]).slice(1,10);
+        var selectionTeam = elementsTeam[0];
+
+        // sort data
+        data.sort((a,b) => parseFloat(b[selectionTeam.value]) - parseFloat(a[selectionTeam.value]));
+
+        // set new min and max
+        min = d3.min(data, d => parseFloat(d[selectionTeam.value]));
+        max = d3.max(data, d => parseFloat(d[selectionTeam.value]));
+
+
+        // update scales (domains) if they rely on our data
+        y.domain([0,max])
+            .range([graphHeight,0]);
+
+        x.domain(data.map(item => item.Team))
+
+
+        // join updated data to elements
+        const rects = graph.selectAll('rect').data(data);
+
+        // remove unwanted (if any) shapes using the exit selection
+        rects.exit().remove();
+
+        // update current shapes in the dom
+        rects.attr('width', x.bandwidth)
+        .attr('height', d => graphHeight - y(d[selectionTeam.value]))
+        .attr('fill', d => d.TennColor)
+        .attr('x', d => x(d.Team))
+        .attr('y', d => y(d[selectionTeam.value]));
+
+
+
+        // append the enter selection to the dom
+        rects.enter()
+            .append('rect')
+            .attr('width', x.bandwidth)
+            .attr('height', d => graphHeight - y(d[selectionTeam.value]))
+            .attr('fill', d => d.TennColor)
+            .attr('x', (d,i) => x(d.Team))
+            .attr('y', d => y(d[selectionTeam.value]));
+
+        // call the axes
+        xAxisGroup.call(xAxis);
+        yAxisGroup.call(yAxis);
+
+        // update tooltip
+
+            tip.html(d => {
+                let content = `<div class="tooltip-left"><strong>Team: </strong><span class="tooltip-right">${d.Team}</span></div>`;
+                content += `<div class="tooltip-left"><strong>${selectionTeam.value}: </strong><span class="tooltip-right">${d[selectionTeam.value]}</span></div>`;
+
+                
+                return content;
+            })
+
+            console.log(selectionTeam.value);
+
+        function populateTitle(){
+            document.getElementById('drop_select').innerHTML = selectionTeam.value;
+        }
+
+        populateTitle();
+
+    }
+
+
+
 
     // dropdown menu interface
+
+    var select_one = d3.select("#drop_one")
+        .append("select")
+        .attr("id", "dropdown_one");
+
+
     var selector = d3.select("#drop")
         .append("select")
         .attr("id","dropdown")
         .on("change", function(d){
             selection = document.getElementById("dropdown"); 
-            update(data);    
+            updateTeam(data);    
 
         
      });
 
      // create menu options
+
+     const category_csvs = {
+         'Quarterbacks': 'blah', 
+         'Team Rushing': 'blah', 
+         'Offensive line': 'blah'
+     }
+
+     const categories = ['Quarterbacks','Team Rushing','Offensive line']
+
+
+     select_one.selectAll("option")
+        .data(categories)
+        .enter().append("option")
+        .attr("value", function(d){
+            return d;
+            })
+            .text(function(d){
+            return d;
+            }) ;
+
+
+
      selector.selectAll("option")
         .data(elements)
         .enter().append("option")
@@ -243,6 +347,45 @@ d3.csv('sec_qbs_2018.csv').then(data => {
         .text(function(d){
         return d;
         }) ;
+
+
+        // test dropdown
+
+
+
+
+
+
+        // template        
+
+        $("#first-choice").change(function() {
+
+            var $dropdown = $(this);
+        
+            $.getJSON("jsondata/data.json", function(data) {
+            
+                var key = $dropdown.val();
+                var vals = [];
+                                    
+                switch(key) {
+                    case 'beverages':
+                        vals = data.beverages.split(",");
+                        break;
+                    case 'snacks':
+                        vals = data.snacks.split(",");
+                        break;
+                    case 'base':
+                        vals = ['Please choose from above'];
+                }
+                
+                var $secondChoice = $("#second-choice");
+                $secondChoice.empty();
+                $.each(vals, function(index, value) {
+                    $secondChoice.append("<option>" + value + "</option>");
+                });
+        
+            });
+        });
 
 })
 
