@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<style>
+
+.counties :hover {
+  fill: red;
+}
+
+.county-borders {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 0.5px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.Blues .q0-9{fill:rgb(247,251,255)}
+.Blues .q1-9{fill:rgb(222,235,247)}
+.Blues .q2-9{fill:rgb(198,219,239)}
+.Blues .q3-9{fill:rgb(158,202,225)}
+.Blues .q4-9{fill:rgb(107,174,214)}
+.Blues .q5-9{fill:rgb(66,146,198)}
+.Blues .q6-9{fill:rgb(33,113,181)}
+.Blues .q7-9{fill:rgb(8,81,156)}
+.Blues .q8-9{fill:rgb(8,48,107)}
+
+</style>
+<svg width="960" height="600"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script>
+
+var svg = d3.select("svg");
+
+var path = d3.geoPath();
+
+// create a container for counties
+var counties = svg.append("g")
+    .attr("id", "counties");
+
+d3.json("us-states.json", function(error, us) {
+  if (error) throw error;
+
+  svg.append("g")
+      .attr("class", "counties")
+      .selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+      .enter().append("path")
+      .attr("d", path);
+
+  svg.append("path")
+      .attr("class", "county-borders")
+      .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+
+// load the unemployment by county data
+d3.csv("dental_prems.csv", function(d) {
+    data = d;
+    console.log(d);
+
+    var rateById = {}; // Create empty object for holding dataset
+    unemployment.forEach(function(d) {
+      rateById[d.id] = +d.rate; // Create property for each ID, give it value from rate
+    });
+    
+    svg.append("g")
+        .attr("class", "counties")
+      .selectAll("path")
+        .data(topojson.feature(us, us.objects.counties).features)
+      .enter().append("path")
+        .attr("d", path)
+        .style("fill", function(d) {
+          return color(rateById[d.id]); // get rate value for property matching data ID
+          // pass rate value to color function, return color based on domain and range
+        })
+        .style("stroke", "black");
+
+    var color = d3.scaleThreshold()
+      .domain([0.02, 0.04, 0.06, 0.08, 0.10])
+      .range(["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#756bb1", "#54278f"]);
+
+
+
+    
+});
+
+
+
+});
+
+</script>
+
+<!-- unemployment.forEach(function(d) { rateById[d.id] = +d.rate; });
+svg.append("g")
+    .attr("class", "counties")
+  .selectAll("path")
+    .data(topojson.feature(us, us.objects.counties).features)
+  .enter().append("path")
+    .attr("d", path)
+    .style("fill", function(d) { return color(rateById[d.id]); });
+svg.append("path")
+    .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
+    .attr("class", "states")
+    .attr("d", path);
+} -->

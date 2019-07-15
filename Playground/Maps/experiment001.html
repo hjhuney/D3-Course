@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+<style>
+  
+  text {
+    font-family: "Raleway"
+  }
+
+#start{
+  display: block;
+  position: absolute;
+  top: 300px;
+  left: 400px;
+  width: 100px;
+  color: white;
+  background-color: green;
+  border: none;
+  padding: 10px;
+  font-size: 15px;
+}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+  
+#tooltip{
+    
+  display: block;
+  position: absolute;
+  top: 300px;
+  left: 400px;
+  max-width: 150px;
+  z-index: 1000;
+  background-color: white;
+  padding: 5px;
+  font-family: Raleway;
+  font-size: 11px;
+  opacity: 0;
+    
+}
+  
+.active {
+  stroke-width: 1px;
+  stroke: white;
+}
+
+.inactive {
+  stroke: black;
+  stroke-width: .25px;
+}
+
+#tooltip span.positive {
+  color: red;
+}
+
+#tooltip span.negative {
+  color: green;
+}
+#title {
+  font-family: Raleway;
+  position: absolute;
+  display: block;
+  margin: 20px;
+  fill: white;
+  font-size: 35px;
+  box-shadow: 2px solid black;
+
+}
+
+.states{
+  fill: none;
+  stroke: lightgrey;
+  stroke-width: 1px;
+}
+
+text.label {
+  fill: white;
+}
+
+g.legendLinear{
+  background-color: white;
+}
+</style>
+<body>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.4/d3-legend.js"></script>
+
+<script>  
+  
+var width = 960;
+var height = 600;
+var margin = {top: 0, bottom: 0, left: 0, right: 0}
+
+var path = d3.geoPath(); // Geopath generator
+
+var startYear = 2007;
+var unemployment = new Map();
+var year = startYear;
+
+let us = d3.json("https://cdn.jsdelivr.net/npm/us-atlas@2/us/10m.json")
+
+var color =  d3.scaleSequential()
+        .domain([1.0,30.0])
+        .interpolator(d3.interpolateInferno);
+
+d3.queue()
+    .defer(d3.json, "https://d3js.org/us-10m.v1.json")
+    .defer(d3.csv, "dental_prems.csv", function(d){
+      unemployment.set(d.county, [+d.rate2007,+d.rate2008,+d.rate2009,+d.rate2010,+d.rate2011,+d.rate2012,+d.rate2013,+d.rate2014,+d.rate2015,+d.rate2016,d.area])
+    })
+    .await(ready)
+
+function ready(error, us) {
+  var zoomExtent = d3.zoom().scaleExtent([1, 20]);
+
+  function zoom() {
+    g.attr("transform", d3.event.transform)
+  }
+
+  var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.bottom + margin.top)
+    .style("background-color","lightgrey")
+    .call(zoomExtent
+        .on("zoom", zoom))
+
+  var tooltip = d3.select("body")
+    .append("div")
+    .attr("id","tooltip")
+    .attr("pointer-events","none")
+
+  var g = svg.append("g")
+      .attr("class", "counties")
+      .attr("transform",`translate(8,${margin.top})`)
+      .on("mouseleave", function(){
+        d3.select("#tooltip")
+          .transition()
+          .style("opacity",0)
+      })
+      .on("mouseover", function(){
+          d3.select("#tooltip")
+          .transition()
+          .style("opacity",1)
+      })
+
+   svg.append("g")
+    .attr("class", "legendLinear")
+    .attr("transform", `translate(${width-420},${height-90})`);
+
+  var legendLinear = d3.legendColor()
+    .shapeWidth(35)
+    .shapePadding(3)
+    .cells(10)
+    .orient('horizontal')
+    .scale(color);
+
+  svg.select(".legendLinear")
+    .call(legendLinear);
+
+  d3.select("text.label").text("1.0%")
+
+
+  var paths = g.selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+      .enter().append("path")
+      .attr("fill", function(d){
+            return unemployment.get(d.id) ?     
+            color(unemployment.get(d.id)[0]) : "white";
+      })
+      .attr("d", path)
+      .attr("class","inactive")
+      .on("mouseover",function(d){
+        var countyName = unemployment.get(d.id)[10]
+        d3.select(this)
+          .attr("class","active")
+          .raise();
+
+        d3.selectAll(".states").raise();
+
+        d3.select("#tooltip").html(function(){
+        let isLastYear = d3.select("#year").text() == 2016;
+        let unemplThatYear = unemployment.get(d.id)[year - startYear]
+         if(year != 2007 || isLastYear){
+         var rate = unemployment.get(d.id)[year-startYear] - unemployment.get(d.id)[year-2008] >= 0 ? 
+            "positive" : "negative";
+            if(isLastYear){
+              let tempYear = 2016;
+              var tempRate = unemployment.get(d.id)[tempYear-startYear] - unemployment.get(d.id)[tempYear-2008] >= 0 ? 
+            "positive" : "negative";
+              let tempUnemplThatYear = unemployment.get(d.id)[tempYear - startYear]
+              return `${countyName}: ${tempUnemplThatYear}% <span class=${rate}>(${(unemployment.get(d.id)[tempYear-startYear] - unemployment.get(d.id)[2016-2008]).toFixed(2)})</span>`
+              }
+          return `${countyName}: ${unemplThatYear}% <span class=${rate}>(${(unemployment.get(d.id)[year-startYear] - unemployment.get(d.id)[year-2008]).toFixed(2)})</span>`
+          }
+          else {
+            return `${countyName}: ${unemplThatYear}%`
+          }
+        })
+      })
+      .on("mousemove", function(d,event){
+        let tooltipHeight = $("#tooltip").height();
+        d3.select("#tooltip").style("left", () => d3.event.x + 15 + "px")
+        d3.select("#tooltip").style("top", () => d3.event.y - tooltipHeight - 20 + "px")
+      })
+      .on("mouseleave",function(){
+        d3.select(this)
+          .attr("class","inactive")
+      })
+  
+  g.append("path")
+    .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+    .attr("class", "states")
+    .attr("d", path);
+
+
+  svg.append("text")
+      .text(startYear)
+      .attr("x",width - 205)
+      .attr("y",56)
+      .attr("id","year")
+      .style("font-size", "45px")
+      .style("fill","white")
+      .style("opacity",0)
+
+
+
+  d3.select("body")
+    .append("button")
+    .attr("type","button")
+    .text("Start")
+    .attr("id","start")
+
+  d3.select("#start").on("click", function(){
+    d3.select(this).transition().style("opacity",0)
+    d3.select("#title").transition().style("opacity",0).remove();
+    d3.select("#year").transition().style("opacity",1)
+    var runAnimation = setInterval(wrapper, 2500);
+    function wrapper(){
+      if(year<2016){
+        year++
+        recolor(year);
+      }
+      else{
+       clearInterval(runAnimation)
+       year = startYear;
+       d3.select("#start")
+         .attr("z-index",-1)
+         .text("Restart")
+         .style("background-color","orange")
+         .transition().style("opacity",1)
+
+      }
+    }
+
+  })  
+
+    
+  function recolor(x){
+    d3.selectAll("path")
+      .transition()
+      .duration(500)
+      .attr("fill", function(d){
+        return unemployment.get(d.id) ? color(unemployment.get(d.id)[x-startYear]) : "white";
+      })
+      .on("end", function(d){
+          $("#year").text(year)
+          if(document.getElementsByClassName("active")[0]){
+            let countyTag = d3.select(".active").data()[0].id;
+            var rate = unemployment.get(countyTag)[x-startYear] - unemployment.get(countyTag)[x-(startYear+1)] >= 0 ? 
+            "positive" : "negative"
+            $("#tooltip").html(unemployment.get(countyTag)[10] + ": " + unemployment.get(countyTag)[x-startYear] + "% " +`<span class=${rate}>(` + (unemployment.get(countyTag)[x-startYear] - unemployment.get(countyTag)[x-(startYear+1)]).toFixed(2) +")</span>")
+          }
+      })
+
+  }
+
+// APPEND THE TITLE
+
+var title = d3.select("svg")
+  .append("text")
+  .text("Unemployment in the United States")
+  .attr("id","title")
+  .attr("transform",`translate(200,260)`)
+
+}  
+  
+
+</script>

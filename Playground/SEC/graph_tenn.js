@@ -42,10 +42,12 @@ const xAxisGroup = graph.append('g')
 
 const yAxisGroup = graph.append('g');
 
-
+const qbs_csv = 'sec_qbs_2018.csv'
+const qbs_csv_v2 = 'sec_qbs_2018_mod.csv'
+const team_rush_csv = 'sec_team_stats_2018.csv'
 
 // grab the data
-d3.csv('sec_qbs_2018.csv').then(data => {
+d3.csv(qbs_csv_v2).then(data => {
 
     // sort data based on date object
     data.sort((a,b) => parseFloat(b.INTModYPA) - parseFloat(a.INTModYPA));
@@ -53,7 +55,7 @@ d3.csv('sec_qbs_2018.csv').then(data => {
     var min = d3.min(data, d => parseFloat(d.INTModYPA));
     var max = d3.max(data, d => parseFloat(d.INTModYPA));
 
-    var elements = Object.keys(data[0]).slice(7,21);
+    var elements = Object.keys(data[0]).slice(7,40);
     var selection = elements[0];
 
 

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<style>
+
+        .counties {
+            fill: none;
+          }
+          .states {
+            fill: none;
+            stroke: #fff;
+            stroke-linejoin: round;
+          }
+          .q0-9 { fill:rgb(247,251,255); }
+          .q1-9 { fill:rgb(222,235,247); }
+          .q2-9 { fill:rgb(198,219,239); }
+          .q3-9 { fill:rgb(158,202,225); }
+          .q4-9 { fill:rgb(107,174,214); }
+          .q5-9 { fill:rgb(66,146,198); }
+          .q6-9 { fill:rgb(33,113,181); }
+          .q7-9 { fill:rgb(8,81,156); }
+          .q8-9 { fill:rgb(8,48,107); }
+
+</style>
+<body>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.min.js"></script>
+
+
+<script>
+
+
+
+
+// create a container for counties
+var width = 960,
+    height = 600;
+var color = d3.scaleLinear()
+    .domain([15.02, 23.04, 26.06, 32.08, 55.10])
+    .range(["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#756bb1", "#54278f"]);
+var path = d3.geoPath();
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+queue()
+    .defer(d3.json, "us-states.json")
+    .defer(d3.csv, "dental_prems.csv")
+    .await(ready);
+
+function ready(error, us, dental) {
+  if (error) throw error;
+  var premById = {};
+  dental.forEach(d => { premById[d.id] = +d.avg_prem; });
+ 
+  svg.append("g")
+      .attr("class", "counties")
+    .selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+    .enter().append("path")
+      .attr("d", path)
+      .style("fill", d => { return color(premById[d.id]); });
+
+  console.log(dental);
+
+// add tooltip
+const tip = d3.tip()
+    .attr('class', 'tooltip-container')
+    .html(d => {
+      
+        let content = `<div class="tooltip-left"><strong>County: </strong><span class="tooltip-right">${d.county}</span></div>`;
+        content += `<div class="tooltip-left"><strong>Avg Premium: </strong><span class="tooltip-right">${d.avg_prem}</span></div>`;
+        
+        return content;
+    })
+
+svg.call(tip);
+
+// add events
+svg.selectAll('path')
+  // mouse hover event
+  .on('mouseover', (d,i,n) => {
+      tip.show(d, n[i])
+      handleMouseOver(d,i,n);
+  })
+  // remove mouse hover
+  .on('mouseout', (d,i,n) => {
+      tip.hide();
+      handleMouseOut(d,i,n);
+  });
+
+
+    // event handlers;
+const handleMouseOver = (d, i, n) => {
+  d3.select(n[i])
+      .transition('changeSliceFill').duration(500)
+          .attr('fill', '#000');
+}
+
+const handleMouseOut = (d, i, n) => {
+  d3.select(n[i])
+      .transition('changeSliceFill').duration(500)
+          .attr('fill', 'purple');
+}
+
+
+  svg.append("path")
+    .datum(topojson.mesh(us, us.objects.states, function(a, b) {
+      return a.id !== b.id;
+    }))
+    .attr("class", "states")
+    .attr("d", path);
+  };
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+
+<!-- unemployment.forEach(function(d) { premById[d.id] = +d.rate; });
+svg.append("g")
+    .attr("class", "counties")
+  .selectAll("path")
+    .data(topojson.feature(us, us.objects.counties).features)
+  .enter().append("path")
+    .attr("d", path)
+    .style("fill", function(d) { return color(premById[d.id]); });
+svg.append("path")
+    .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
+    .attr("class", "states")
+    .attr("d", path);
+} -->
