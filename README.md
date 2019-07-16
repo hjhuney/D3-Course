@@ -11,7 +11,7 @@ To access Shaun's files for each lecture, click on the "Branch" drop-down menu a
 [D3 Github Repo](https://github.com/d3/d3)
 
 
-# Personal Creations
+## Personal Creations
 
 [US County Choropleth Map](https://hjhuney.github.io/D3-Course/Playground/Maps/dentalMapResize.html)
 [Bar Chart with Tooltip](https://hjhuney.github.io/D3-Course/Playground/SEC/index.html)
